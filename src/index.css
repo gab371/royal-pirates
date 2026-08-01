@@ -1,0 +1,61 @@
+@import "@fontsource-variable/geist";
+/* Identity fonts in CSS so Hub embed (style.css only) loads them. */
+@import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Outfit:wght@400;700;800;900&display=swap");
+@import "./styles/arena.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 30 10% 4%;
+    --foreground: 40 20% 96%;
+    --card: 30 12% 8%;
+    --card-foreground: 40 20% 96%;
+    --popover: 30 12% 8%;
+    --popover-foreground: 40 20% 96%;
+    --primary: 38 92% 50%;
+    --primary-foreground: 30 20% 8%;
+    --secondary: 30 10% 14%;
+    --secondary-foreground: 40 20% 96%;
+    --muted: 30 8% 14%;
+    --muted-foreground: 30 8% 65%;
+    --accent: 30 10% 16%;
+    --accent-foreground: 40 20% 96%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 30 10% 18%;
+    --input: 30 10% 18%;
+    --ring: 38 92% 50%;
+    --radius: 1rem;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    font-family: "Outfit", "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+    background: radial-gradient(circle at center, #1b160a 0%, #09090b 100%);
+    @apply text-slate-100 antialiased selection:bg-amber-500/30 selection:text-amber-200 overflow-x-hidden;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.6);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.6);
+}

@@ -1,0 +1,9 @@
+{
+  "key": "pirates",
+  "name": "Royal Pirates",
+  "emoji": "🏴‍☠️",
+  "desc": "Jeu d'enchères et de plis P2P inspiré de Skull King.",
+  "hasPreConfig": true,
+  "avatars": ["🏴‍☠️", "👑", "🧜‍♀️", "📜", "⚓", "⚔️"],
+  "shellBackground": "radial-gradient(ellipse at center, #1b160a 0%, #09090b 100%)"
+}
