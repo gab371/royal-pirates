@@ -71,12 +71,13 @@ export function SuitMark({ mark, color }: { mark: string; color: string }) {
   }
 
   if (mark === "wave") {
+    // Symmetric arcs — keep within / just past the white disc (no right overflow).
     return (
-      <g transform="translate(120 180) scale(1.1)" fill="none" strokeLinecap="round">
+      <g transform="translate(120 180) scale(1.02)" fill="none" strokeLinecap="round">
         {[
-          { d: "M-66 -24 Q-22 -60 22 -24 T106 -24", o: 11, c: 7 },
-          { d: "M-66 10 Q-22 -26 22 10 T106 10", o: 10, c: 6.5 },
-          { d: "M-58 44 Q-14 12 30 44 T100 44", o: 9, c: 6 },
+          { d: "M-52 -22 Q-18 -52 16 -22 T52 -22", o: 10, c: 6.5 },
+          { d: "M-52 10 Q-18 -20 16 10 T52 10", o: 9.5, c: 6 },
+          { d: "M-48 42 Q-14 14 20 42 T48 42", o: 9, c: 5.5 },
         ].map((w) => (
           <g key={w.d}>
             <path d={w.d} stroke={OUTLINE} strokeWidth={w.o} />
