@@ -52,6 +52,7 @@ export const App: React.FC<AppProps> = ({
     changeConfig,
     placeBid,
     playCard,
+    advanceTrick,
     advanceRound,
     restartGame,
     setRole,
@@ -195,6 +196,7 @@ export const App: React.FC<AppProps> = ({
               isHost={activeHost}
               onPlayCard={playCard}
               onPlaceBid={placeBid}
+              onAdvanceTrick={advanceTrick}
               onAdvanceRound={advanceRound}
               onRestartGame={restartGame}
             />

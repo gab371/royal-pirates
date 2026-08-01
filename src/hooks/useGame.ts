@@ -326,6 +326,7 @@ export function useGame(options?: UseGameOptions) {
     placeBid: (bid: number) => dispatchAction("PLACE_BID", { bid }),
     playCard: (cardId: string, tigressChoice?: "escape" | "pirate") =>
       dispatchAction("PLAY_CARD", { cardId, tigressChoice }),
+    advanceTrick: () => dispatchAction("ADVANCE_TRICK"),
     advanceRound: () => dispatchAction("ADVANCE_ROUND"),
     restartGame: () => dispatchAction("RESTART_GAME"),
     sendChatMessage: (text: string) =>

@@ -95,6 +95,12 @@ export function handleHostAction(
       break;
     }
 
+    case "ADVANCE_TRICK":
+      if (isHostSender && engine.advanceTrick()) {
+        playSfx("click");
+      }
+      break;
+
     case "ADVANCE_ROUND":
       if (isHostSender && engine.advanceFromScoring()) {
         playSfx("click");

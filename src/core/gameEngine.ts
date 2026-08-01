@@ -184,6 +184,7 @@ export class PiratesGameEngine {
       return { ok: true, trickComplete: false, specialPlayed };
     }
 
+    // Last card: resolve winner but keep cards on the table until host advances.
     const res = resolveTrickWinner(
       playedCards,
       this.state.config.enableFourteenBonus,
@@ -194,43 +195,51 @@ export class PiratesGameEngine {
       winnerPlayer.capturedBonus += res.capturedBonus;
     }
 
-    this.state.round.trickHistory.push({
+    const resolvedTrick = {
       ...currentTrick,
       playedCards,
       winnerId: res.winnerId,
       capturedBonus: res.capturedBonus,
-    });
+    };
+    this.state.round.currentTrick = resolvedTrick;
+    this.state.round.trickHistory.push(resolvedTrick);
     this.addLog(
       `Pli remporté par ${winnerPlayer?.name || "un pirate"}${
         res.capturedBonus ? ` (+${res.capturedBonus} bonus)` : ""
       }`,
     );
 
-    const roundNum = this.state.round.roundNumber;
-    if (this.state.round.trickHistory.length < roundNum) {
-      this.state.round.currentTrick = {
-        leadPlayerId: res.winnerId,
-        playedCards: [],
-      };
-      this.bumpNonce();
-      return {
-        ok: true,
-        trickComplete: true,
-        capturedBonus: res.capturedBonus,
-        specialPlayed,
-        roundEnded: false,
-      };
-    }
-
-    applyRoundScoring(this.state, roundNum, (t, ty) => this.addLog(t, ty));
+    const roundEnded =
+      this.state.round.trickHistory.length >= this.state.round.roundNumber;
     this.bumpNonce();
     return {
       ok: true,
       trickComplete: true,
       capturedBonus: res.capturedBonus,
       specialPlayed,
-      roundEnded: true,
+      roundEnded,
     };
+  }
+
+  /** Host-only: clear resolved trick → next trick, or scoring if round is done. */
+  public advanceTrick(): boolean {
+    if (this.state.phase !== "TRICK" || !this.state.round) return false;
+    const trick = this.state.round.currentTrick;
+    if (!trick.winnerId) return false;
+
+    const roundNum = this.state.round.roundNumber;
+    if (this.state.round.trickHistory.length < roundNum) {
+      this.state.round.currentTrick = {
+        leadPlayerId: trick.winnerId,
+        playedCards: [],
+      };
+      this.bumpNonce();
+      return true;
+    }
+
+    applyRoundScoring(this.state, roundNum, (t, ty) => this.addLog(t, ty));
+    this.bumpNonce();
+    return true;
   }
 
   public advanceFromScoring(): boolean {

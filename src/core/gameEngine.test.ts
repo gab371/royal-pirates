@@ -62,7 +62,7 @@ describe("PiratesGameEngine", () => {
     expect(engine.state.players[0].name).toBe("Barbe");
   });
 
-  it("enters SCORING after completing a 1-card round", () => {
+  it("keeps the last trick visible until host advances to SCORING", () => {
     const engine = new PiratesGameEngine();
     engine.addPlayer("p1", "A", "🏴‍☠️", true);
     engine.addPlayer("p2", "B", "👑", false);
@@ -79,6 +79,12 @@ describe("PiratesGameEngine", () => {
 
     expect(engine.playCard("p2", "yellow-2").ok).toBe(true);
     expect(engine.playCard("p1", "yellow-5").ok).toBe(true);
+    expect(engine.state.phase).toBe("TRICK");
+    expect(engine.state.round!.currentTrick.playedCards).toHaveLength(2);
+    expect(engine.state.round!.currentTrick.winnerId).toBe("p1");
+    expect(getCurrentActorId(engine.state)).toBeNull();
+
+    expect(engine.advanceTrick()).toBe(true);
     expect(engine.state.phase).toBe("SCORING");
     expect(engine.state.lastRoundScores).toHaveLength(2);
     expect(engine.advanceFromScoring()).toBe(true);

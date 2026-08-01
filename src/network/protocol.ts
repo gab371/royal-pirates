@@ -28,6 +28,7 @@ export type ClientActionType =
   | "LOCK_SPECTATOR"
   | "PLACE_BID"
   | "PLAY_CARD"
+  | "ADVANCE_TRICK"
   | "ADVANCE_ROUND"
   | "RESTART_GAME";
 

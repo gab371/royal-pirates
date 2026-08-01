@@ -13,6 +13,7 @@ interface GameArenaProps {
   isHost: boolean;
   onPlayCard: (cardId: string, tigressChoice?: "escape" | "pirate") => void;
   onPlaceBid: (bid: number) => void;
+  onAdvanceTrick: () => void;
   onAdvanceRound: () => void;
   onRestartGame: () => void;
 }
@@ -55,6 +56,7 @@ export function GameArena({
   isHost,
   onPlayCard,
   onPlaceBid,
+  onAdvanceTrick,
   onAdvanceRound,
   onRestartGame,
 }: GameArenaProps) {
@@ -65,15 +67,22 @@ export function GameArena({
     gameState.players.filter((p) => p.isConnected),
     myPeerId,
   );
-  const played = gameState.round?.currentTrick.playedCards ?? [];
-  const leadSuit = getLeadSuit(played);
+  const currentTrick = gameState.round?.currentTrick;
+  const played = currentTrick?.playedCards ?? [];
+  const trickWinnerId = currentTrick?.winnerId;
+  const trickResolved = Boolean(trickWinnerId);
+  const leadSuit = trickResolved ? null : getLeadSuit(played);
   const activeName =
     gameState.players.find((p) => p.id === activeId)?.name ?? "…";
+  const trickWinner = gameState.players.find((p) => p.id === trickWinnerId);
+  const round = gameState.round;
+  const roundDone =
+    trickResolved &&
+    (round?.trickHistory.length ?? 0) >= (round?.roundNumber ?? 0);
 
   const bidDisplay =
     me?.bid === null || me?.bid === undefined ? "—" : String(me.bid);
 
-  const round = gameState.round;
   const roundNum = round?.roundNumber ?? 1;
   const totalRounds = round?.totalRounds ?? 10;
   const dealer = gameState.players.find((p) => p.id === round?.dealerId);
@@ -81,7 +90,9 @@ export function GameArena({
     gameState.phase === "BIDDING"
       ? "Phase d'Enchères"
       : gameState.phase === "TRICK"
-        ? "Phase de Plis"
+        ? trickResolved
+          ? "Pli terminé"
+          : "Phase de Plis"
         : gameState.phase === "SCORING"
           ? "Phase des Scores"
           : gameState.phase === "GAME_OVER"
@@ -199,9 +210,34 @@ export function GameArena({
             </div>
           )}
 
-          {gameState.phase === "TRICK" && (
+          {gameState.phase === "TRICK" && !trickResolved && (
             <div className="turn-banner">
               {isMyTurn ? "C'est TOI de jouer !" : `Tour de ${activeName}`}
+            </div>
+          )}
+
+          {gameState.phase === "TRICK" && trickResolved && (
+            <div className="trick-resolve-panel">
+              <div className="turn-banner">
+                Pli remporté par {trickWinner?.avatar}{" "}
+                {trickWinner?.name ?? "…"}
+                {currentTrick?.capturedBonus
+                  ? ` (+${currentTrick.capturedBonus})`
+                  : ""}
+              </div>
+              {isHost ? (
+                <button
+                  type="button"
+                  className="trick-advance-btn"
+                  onClick={onAdvanceTrick}
+                >
+                  {roundDone ? "Voir les scores" : "Pli suivant"}
+                </button>
+              ) : (
+                <p className="trick-advance-wait">
+                  En attente du capitaine…
+                </p>
+              )}
             </div>
           )}
         </div>
