@@ -8,21 +8,13 @@ export function createMaskedCard(id: string): Card {
   };
 }
 
-function sanitizePlayer(
-  player: Player,
-  isSelf: boolean,
-  phase: GameState["phase"],
-): Player {
+function sanitizePlayer(player: Player, isSelf: boolean): Player {
   const hand = isSelf
     ? player.hand.map((card) => ({ ...card }))
     : player.hand.map((_, i) => createMaskedCard(`hidden-${player.id}-${i}`));
 
-  let bid = player.bid;
-  if (phase === "BIDDING" && !player.bidsRevealed && !isSelf) {
-    bid = player.bid !== null ? -1 : null;
-  }
-
-  return { ...player, hand, bid };
+  // Bids are public as soon as announced (table-call style, like Skull King).
+  return { ...player, hand, bid: player.bid };
 }
 
 /** Sanitize GameState for a seated player (own hand visible). */
@@ -33,7 +25,7 @@ export function sanitizeGameState(
   return {
     ...state,
     players: state.players.map((p) =>
-      sanitizePlayer(p, p.id === targetPlayerId, state.phase),
+      sanitizePlayer(p, p.id === targetPlayerId),
     ),
   };
 }
@@ -42,7 +34,7 @@ export function sanitizeGameState(
 export function sanitizeGameStateForSpectator(state: GameState): GameState {
   return {
     ...state,
-    players: state.players.map((p) => sanitizePlayer(p, false, state.phase)),
+    players: state.players.map((p) => sanitizePlayer(p, false)),
   };
 }
 

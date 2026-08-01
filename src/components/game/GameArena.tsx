@@ -28,8 +28,7 @@ function OpponentSeat({
   facing: SeatFacing;
   className: string;
 }) {
-  const bid =
-    player.bid === null ? "—" : player.bid === -1 ? "?" : String(player.bid);
+  const bid = player.bid === null ? "—" : String(player.bid);
 
   return (
     <div className={`player-seat ${className} ${active ? "active-turn" : ""}`}>
@@ -72,11 +71,7 @@ export function GameArena({
     gameState.players.find((p) => p.id === activeId)?.name ?? "…";
 
   const bidDisplay =
-    me?.bid === null || me?.bid === undefined
-      ? "—"
-      : me.bid === -1
-        ? "?"
-        : String(me.bid);
+    me?.bid === null || me?.bid === undefined ? "—" : String(me.bid);
 
   const round = gameState.round;
   const roundNum = round?.roundNumber ?? 1;

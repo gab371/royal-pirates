@@ -87,6 +87,10 @@
   justify-content: center;
   z-index: 10;
   gap: 12px;
+  pointer-events: none;
+}
+.center-play-zone > * {
+  pointer-events: auto;
 }
 
 .trick-cards {
@@ -348,9 +352,15 @@
 }
 
 .arena-overlay {
+  position: relative;
   width: min(420px, 92vw);
   pointer-events: auto;
-  z-index: 15;
+  /* Above seat-bottom hand (40–50) so bidding / scoring stays visible & clickable */
+  z-index: 80;
+}
+
+.center-play-zone:has(.arena-overlay) {
+  z-index: 80;
 }
 
 /* Compact auction — leaves room for the hand below */

@@ -1,4 +1,4 @@
-import React from "react";
+import { createPortal } from "react-dom";
 
 interface TigressModalProps {
   isOpen: boolean;
@@ -6,51 +6,78 @@ interface TigressModalProps {
   onCancel: () => void;
 }
 
-export const TigressModal: React.FC<TigressModalProps> = ({
+export function TigressModal({
   isOpen,
   onConfirm,
   onCancel,
-}) => {
+}: TigressModalProps) {
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-orange-500/50 rounded-3xl p-6 max-w-sm w-full shadow-2xl text-center animate-in zoom-in-95 duration-150">
-        <div className="text-5xl mb-2">🐯</div>
-        <h3 className="text-xl font-black text-orange-400 mb-1">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[200] flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm"
+      style={{ pointerEvents: "auto" }}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="tigress-modal-title"
+    >
+      <div className="w-full max-w-sm rounded-3xl border border-orange-500/50 bg-slate-900 p-6 text-center shadow-2xl">
+        <div className="mb-2 text-5xl" aria-hidden>
+          🐯
+        </div>
+        <h3
+          id="tigress-modal-title"
+          className="mb-1 text-xl font-black text-orange-400"
+        >
           Choix de la Tigresse
         </h3>
-        <p className="text-xs text-slate-300 mb-6">
+        <p className="mb-6 text-xs text-slate-300">
           Comment souhaitez-vous jouer la Tigresse pour ce pli ?
         </p>
 
-        <div className="grid grid-cols-2 gap-3 mb-4">
+        <div className="mb-4 grid grid-cols-2 gap-3">
           <button
+            type="button"
             onClick={() => onConfirm("escape")}
-            className="p-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-2xl flex flex-col items-center gap-1 transition shadow hover:border-slate-400 active:scale-95"
+            className="flex flex-col items-center gap-1 rounded-2xl border border-slate-600 bg-slate-800 p-4 transition hover:border-slate-400 hover:bg-slate-700 active:scale-95"
           >
-            <span className="text-3xl">🏳️</span>
-            <span className="font-bold text-slate-200 text-xs">Jouer comme Fuite</span>
-            <span className="text-[10px] text-slate-400">Ne gagne aucun pli</span>
+            <span className="text-3xl" aria-hidden>
+              🏳️
+            </span>
+            <span className="text-xs font-bold text-slate-200">
+              Jouer comme Fuite
+            </span>
+            <span className="text-[10px] text-slate-400">
+              Ne gagne aucun pli
+            </span>
           </button>
 
           <button
+            type="button"
             onClick={() => onConfirm("pirate")}
-            className="p-4 bg-amber-950/80 hover:bg-amber-900/90 border border-amber-500/60 rounded-2xl flex flex-col items-center gap-1 transition shadow hover:border-amber-400 active:scale-95"
+            className="flex flex-col items-center gap-1 rounded-2xl border border-amber-500/60 bg-amber-950/80 p-4 transition hover:border-amber-400 hover:bg-amber-900/90 active:scale-95"
           >
-            <span className="text-3xl">🏴‍☠️</span>
-            <span className="font-bold text-amber-300 text-xs">Jouer comme Pirate</span>
-            <span className="text-[10px] text-amber-400/80">Bat les cartes de couleur</span>
+            <span className="text-3xl" aria-hidden>
+              🏴‍☠️
+            </span>
+            <span className="text-xs font-bold text-amber-300">
+              Jouer comme Pirate
+            </span>
+            <span className="text-[10px] text-amber-400/80">
+              Bat les cartes de couleur
+            </span>
           </button>
         </div>
 
         <button
+          type="button"
           onClick={onCancel}
-          className="text-xs text-slate-400 hover:text-slate-200 font-semibold"
+          className="text-xs font-semibold text-slate-400 hover:text-slate-200"
         >
           Annuler
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
-};
+}
