@@ -14,6 +14,7 @@ export type Phase = "LOBBY" | "BIDDING" | "TRICK" | "SCORING" | "GAME_OVER";
 export interface GameConfig {
   suitFollowHints: boolean;
   enableFourteenBonus: boolean;
+  enableGhostPirate?: boolean;
 }
 
 export interface Player {
@@ -29,6 +30,7 @@ export interface Player {
   isConnected: boolean;
   isReady: boolean;
   isHost: boolean;
+  isBot?: boolean;
 }
 
 export interface Spectator {

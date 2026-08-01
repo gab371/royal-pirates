@@ -16,10 +16,29 @@ export function getCurrentActorId(state: GameState): string | null {
   if (active.length === 0) return null;
 
   const { leadPlayerId, playedCards } = state.round.currentTrick;
+  const alreadyPlayed = new Set(playedCards.map((pc) => pc.playerId));
+
+  const botPlayer = active.find((p) => p.isBot);
+  if (botPlayer && active.length === 3) {
+    const humanPlayers = active.filter((p) => !p.isBot);
+    if (playedCards.length === 0) {
+      return leadPlayerId;
+    }
+    if (playedCards.length === 1) {
+      if (!alreadyPlayed.has(botPlayer.id)) {
+        return botPlayer.id;
+      }
+    }
+    if (playedCards.length === 2) {
+      const remainingHuman = humanPlayers.find((h) => !alreadyPlayed.has(h.id));
+      return remainingHuman ? remainingHuman.id : null;
+    }
+    return null;
+  }
+
   const leadIdx = active.findIndex((p) => p.id === leadPlayerId);
   if (leadIdx < 0) return active[0]?.id ?? null;
 
-  const alreadyPlayed = new Set(playedCards.map((pc) => pc.playerId));
   for (let i = 0; i < active.length; i++) {
     const candidate = active[(leadIdx + i) % active.length];
     if (!alreadyPlayed.has(candidate.id)) return candidate.id;

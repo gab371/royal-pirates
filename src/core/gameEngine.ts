@@ -15,6 +15,8 @@ import {
 } from "./seating.ts";
 import { applyRoundScoring, dealRound } from "./roundLifecycle.ts";
 
+export const GHOST_PIRATE_ID = "ghost-pirate";
+
 export interface PlayCardResult {
   ok: boolean;
   trickComplete?: boolean;
@@ -32,6 +34,7 @@ export class PiratesGameEngine {
       config: {
         suitFollowHints: true,
         enableFourteenBonus: false,
+        enableGhostPirate: true,
         ...config,
       },
       players: [],
@@ -108,7 +111,15 @@ export class PiratesGameEngine {
   }
 
   public startGame(): boolean {
-    if (getActivePlayers(this.state).length < 2) return false;
+    const activeHumans = getActivePlayers(this.state).filter((p) => !p.isBot);
+    if (activeHumans.length < 2) return false;
+
+    if (activeHumans.length === 2 && this.state.config.enableGhostPirate !== false) {
+      this.ensureGhostPirate();
+    } else {
+      this.removeGhostPirate();
+    }
+
     this.state.lastRoundScores = null;
     this.startRound(1, 0);
     return true;
@@ -117,6 +128,7 @@ export class PiratesGameEngine {
   public startRound(roundNumber: number, dealerIdx: number): void {
     dealRound(this.state, roundNumber, dealerIdx, (t, ty) => this.addLog(t, ty));
     this.bumpNonce();
+    this.autoPlayGhostPirateIfNeeded();
   }
 
   public submitBid(playerId: string, bid: number): boolean {
@@ -137,6 +149,7 @@ export class PiratesGameEngine {
       });
       this.state.phase = "TRICK";
       this.addLog("Toutes les enchères ont été révélées !");
+      this.autoPlayGhostPirateIfNeeded();
     }
 
     this.bumpNonce();
@@ -181,6 +194,7 @@ export class PiratesGameEngine {
     if (playedCards.length < activePlayers.length) {
       this.state.round.currentTrick.playedCards = playedCards;
       this.bumpNonce();
+      this.autoPlayGhostPirateIfNeeded();
       return { ok: true, trickComplete: false, specialPlayed };
     }
 
@@ -229,17 +243,68 @@ export class PiratesGameEngine {
 
     const roundNum = this.state.round.roundNumber;
     if (this.state.round.trickHistory.length < roundNum) {
+      let nextLeadId = trick.winnerId;
+      if (nextLeadId === GHOST_PIRATE_ID) {
+        const humanPlayers = getActivePlayers(this.state).filter((p) => !p.isBot);
+        const prevLeadIdx = humanPlayers.findIndex(
+          (p) => p.id === trick.leadPlayerId,
+        );
+        const nextHumanIdx = (prevLeadIdx + 1) % Math.max(1, humanPlayers.length);
+        nextLeadId =
+          humanPlayers[nextHumanIdx]?.id ||
+          humanPlayers[0]?.id ||
+          trick.leadPlayerId;
+      }
+
       this.state.round.currentTrick = {
-        leadPlayerId: trick.winnerId,
+        leadPlayerId: nextLeadId,
         playedCards: [],
       };
       this.bumpNonce();
+      this.autoPlayGhostPirateIfNeeded();
       return true;
     }
 
     applyRoundScoring(this.state, roundNum, (t, ty) => this.addLog(t, ty));
     this.bumpNonce();
     return true;
+  }
+
+  public autoPlayGhostPirateIfNeeded(): void {
+    if (this.state.phase !== "TRICK" || !this.state.round) return;
+    const currentActorId = getCurrentActorId(this.state);
+    if (currentActorId !== GHOST_PIRATE_ID) return;
+
+    const botPlayer = this.state.players.find((p) => p.id === GHOST_PIRATE_ID);
+    if (!botPlayer || botPlayer.hand.length === 0) return;
+
+    const topCard = botPlayer.hand[0];
+    const tigressChoice = topCard.special === "tigress" ? "escape" : undefined;
+    this.playCard(GHOST_PIRATE_ID, topCard.id, tigressChoice);
+  }
+
+  private ensureGhostPirate(): void {
+    if (!this.state.players.some((p) => p.id === GHOST_PIRATE_ID)) {
+      this.state.players.push({
+        id: GHOST_PIRATE_ID,
+        name: "Ghost Pirate",
+        avatar: "🏴‍☠️",
+        score: 0,
+        bid: 0,
+        bidsRevealed: true,
+        tricksWon: 0,
+        hand: [],
+        capturedBonus: 0,
+        isConnected: true,
+        isReady: true,
+        isHost: false,
+        isBot: true,
+      });
+    }
+  }
+
+  private removeGhostPirate(): void {
+    this.state.players = this.state.players.filter((p) => !p.isBot);
   }
 
   public advanceFromScoring(): boolean {

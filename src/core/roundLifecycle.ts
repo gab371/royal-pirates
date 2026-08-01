@@ -31,17 +31,28 @@ export function dealRound(
     });
 
     player.hand = hand;
-    player.bid = null;
-    player.bidsRevealed = false;
+    player.bid = player.isBot ? 0 : null;
+    player.bidsRevealed = Boolean(player.isBot);
     player.tricksWon = 0;
     player.capturedBonus = 0;
   });
 
+  const humanPlayers = activePlayers.filter((p) => !p.isBot);
   const dealerId =
-    activePlayers[dealerIdx % activePlayers.length]?.id || activePlayers[0].id;
+    humanPlayers[dealerIdx % humanPlayers.length]?.id ||
+    activePlayers[dealerIdx % activePlayers.length]?.id ||
+    activePlayers[0].id;
   const firstLeadId =
+    humanPlayers[(dealerIdx + 1) % humanPlayers.length]?.id ||
     activePlayers[(dealerIdx + 1) % activePlayers.length]?.id ||
     activePlayers[0].id;
+
+  const bidsSubmitted: Record<string, number> = {};
+  state.players.forEach((p) => {
+    if (p.isBot && p.isConnected) {
+      bidsSubmitted[p.id] = 0;
+    }
+  });
 
   state.round = {
     roundNumber,
@@ -49,7 +60,7 @@ export function dealRound(
     dealerId,
     currentTrick: { leadPlayerId: firstLeadId, playedCards: [] },
     trickHistory: [],
-    bidsSubmitted: {},
+    bidsSubmitted,
   };
 
   state.phase = "BIDDING";
@@ -66,6 +77,12 @@ export function applyRoundScoring(
 
   state.players.forEach((p) => {
     if (!p.isConnected) return;
+    if (p.isBot) {
+      p.bid = 0;
+      p.tricksWon = 0;
+      p.capturedBonus = 0;
+      return;
+    }
     const scoreRes = calculatePlayerRoundScore(
       p.bid ?? 0,
       p.tricksWon,
@@ -95,7 +112,9 @@ export function applyRoundScoring(
   state.lastRoundScores = lines;
 
   if (roundNum >= 10) {
-    const sorted = [...getActivePlayers(state)].sort((a, b) => b.score - a.score);
+    const sorted = [...getActivePlayers(state)]
+      .filter((p) => !p.isBot)
+      .sort((a, b) => b.score - a.score);
     state.phase = "GAME_OVER";
     state.winnerId = sorted[0]?.id;
     addLog(

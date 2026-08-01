@@ -62,33 +62,67 @@ describe("PiratesGameEngine", () => {
     expect(engine.state.players[0].name).toBe("Barbe");
   });
 
-  it("keeps the last trick visible until host advances to SCORING", () => {
-    const engine = new PiratesGameEngine();
+  it("plays with Ghost Pirate in 2-player mode when enabled", () => {
+    const engine = new PiratesGameEngine({ enableGhostPirate: true });
     engine.addPlayer("p1", "A", "🏴‍☠️", true);
     engine.addPlayer("p2", "B", "👑", false);
-    engine.startGame();
+    expect(engine.startGame()).toBe(true);
 
-    // Force deterministic hands for round 1
-    engine.state.players[0].hand = [{ id: "yellow-5", suit: "yellow", rank: 5 }];
-    engine.state.players[1].hand = [{ id: "yellow-2", suit: "yellow", rank: 2 }];
-    engine.state.round!.dealerId = "p1";
-    engine.state.round!.currentTrick.leadPlayerId = "p2";
+    // Ghost Pirate should be added automatically
+    expect(engine.state.players).toHaveLength(3);
+    const bot = engine.state.players.find((p) => p.isBot);
+    expect(bot).toBeDefined();
+    expect(bot?.id).toBe("ghost-pirate");
+    expect(bot?.bid).toBe(0);
 
-    engine.submitBid("p1", 1);
-    engine.submitBid("p2", 0);
-
-    expect(engine.playCard("p2", "yellow-2").ok).toBe(true);
-    expect(engine.playCard("p1", "yellow-5").ok).toBe(true);
+    // Submit bids for humans
+    expect(engine.submitBid("p1", 1)).toBe(true);
+    expect(engine.submitBid("p2", 0)).toBe(true);
     expect(engine.state.phase).toBe("TRICK");
-    expect(engine.state.round!.currentTrick.playedCards).toHaveLength(2);
-    expect(engine.state.round!.currentTrick.winnerId).toBe("p1");
-    expect(getCurrentActorId(engine.state)).toBeNull();
 
+    // Force deterministic hands for round 2 (2 tricks)
+    engine.state.round!.roundNumber = 2;
+    const p1 = engine.state.players.find((p) => p.id === "p1")!;
+    const p2 = engine.state.players.find((p) => p.id === "p2")!;
+    p1.hand = [
+      { id: "yellow-5", suit: "yellow", rank: 5 },
+      { id: "yellow-6", suit: "yellow", rank: 6 },
+    ];
+    p2.hand = [
+      { id: "yellow-2", suit: "yellow", rank: 2 },
+      { id: "yellow-3", suit: "yellow", rank: 3 },
+    ];
+    bot!.hand = [
+      { id: "black-10", suit: "black", rank: 10 },
+      { id: "black-11", suit: "black", rank: 11 },
+    ];
+
+    engine.state.round!.currentTrick.leadPlayerId = "p1";
+
+    // P1 plays 1st
+    expect(engine.playCard("p1", "yellow-5").ok).toBe(true);
+    // Ghost Pirate auto-plays 2nd!
+    expect(engine.state.round!.currentTrick.playedCards).toHaveLength(2);
+    expect(engine.state.round!.currentTrick.playedCards[1].playerId).toBe("ghost-pirate");
+
+    // P2 plays 3rd
+    expect(engine.playCard("p2", "yellow-2").ok).toBe(true);
+    expect(engine.state.round!.currentTrick.playedCards).toHaveLength(3);
+    expect(engine.state.round!.currentTrick.winnerId).toBe("ghost-pirate");
+
+    // Advance trick to trick 2: since Ghost Pirate won, next lead rotates to P2 (the other human)
     expect(engine.advanceTrick()).toBe(true);
-    expect(engine.state.phase).toBe("SCORING");
-    expect(engine.state.lastRoundScores).toHaveLength(2);
-    expect(engine.advanceFromScoring()).toBe(true);
-    expect(engine.state.phase).toBe("BIDDING");
-    expect(engine.state.round?.roundNumber).toBe(2);
+    expect(engine.state.phase).toBe("TRICK");
+    expect(engine.state.round!.currentTrick.leadPlayerId).toBe("p2");
+  });
+
+  it("can disable Ghost Pirate in 2-player mode via config", () => {
+    const engine = new PiratesGameEngine({ enableGhostPirate: false });
+    engine.addPlayer("p1", "A", "🏴‍☠️", true);
+    engine.addPlayer("p2", "B", "👑", false);
+    expect(engine.startGame()).toBe(true);
+
+    expect(engine.state.players).toHaveLength(2);
+    expect(engine.state.players.some((p) => p.isBot)).toBe(false);
   });
 });

@@ -115,6 +115,24 @@ export const Lobby: React.FC<LobbyProps> = ({
                 className="w-4 h-4 rounded accent-amber-500 bg-zinc-800 border-zinc-700 cursor-pointer"
               />
             </label>
+
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer">
+              <div>
+                <div className="font-bold">Ghost Pirate (Mode 2 Joueurs)</div>
+                <div className="text-[10px] text-zinc-500">
+                  Joueur virtuel en 2ᵉ position pour pimenter les duels 1v1
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                disabled={!isHost}
+                checked={gameState?.config?.enableGhostPirate ?? true}
+                onChange={(e) =>
+                  onChangeConfig?.({ enableGhostPirate: e.target.checked })
+                }
+                className="w-4 h-4 rounded accent-amber-500 bg-zinc-800 border-zinc-700 cursor-pointer"
+              />
+            </label>
           </div>
         </div>
 
