@@ -55,6 +55,10 @@ export const App: React.FC<AppProps> = ({
     advanceTrick,
     advanceRound,
     restartGame,
+    useRosiePower,
+    useWillPower,
+    useRascalPower,
+    useHarryPower,
     setRole,
     lockSpectator,
     sendChatMessage,
@@ -199,6 +203,10 @@ export const App: React.FC<AppProps> = ({
               onAdvanceTrick={advanceTrick}
               onAdvanceRound={advanceRound}
               onRestartGame={restartGame}
+              onUseRosie={useRosiePower}
+              onUseWill={useWillPower}
+              onUseRascal={useRascalPower}
+              onUseHarry={useHarryPower}
             />
 
             <SideChrome

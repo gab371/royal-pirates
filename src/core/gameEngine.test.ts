@@ -4,8 +4,8 @@ import { getCurrentActorId } from "./turnOrder.ts";
 import { createDeck } from "./decks.ts";
 
 describe("PiratesGameEngine", () => {
-  it("builds a 66-card deck", () => {
-    expect(createDeck()).toHaveLength(66);
+  it("builds a 70-card deck", () => {
+    expect(createDeck()).toHaveLength(70);
   });
 
   it("rejects out-of-range bids and out-of-turn plays", () => {
@@ -82,6 +82,7 @@ describe("PiratesGameEngine", () => {
 
     // Force deterministic hands for round 2 (2 tricks)
     engine.state.round!.roundNumber = 2;
+    engine.state.round!.cardsInRound = 2;
     const p1 = engine.state.players.find((p) => p.id === "p1")!;
     const p2 = engine.state.players.find((p) => p.id === "p2")!;
     p1.hand = [
@@ -125,4 +126,97 @@ describe("PiratesGameEngine", () => {
     expect(engine.state.players).toHaveLength(2);
     expect(engine.state.players.some((p) => p.isBot)).toBe(false);
   });
+
+  it("handles Kraken destroying a trick and White Whale neutralizing special cards", () => {
+    const engine = new PiratesGameEngine({
+      enableGhostPirate: false,
+      enableKrakenAndWhale: true,
+    });
+    engine.addPlayer("p1", "A", "🏴‍☠️", true);
+    engine.addPlayer("p2", "B", "👑", false);
+    engine.startGame();
+    engine.state.round!.cardsInRound = 2;
+
+    // 1. Test Kraken
+    p1CardPlay(engine, { id: "kraken", special: "kraken" }, { id: "yellow-5", suit: "yellow", rank: 5 });
+    expect(engine.state.round!.currentTrick.destroyedByKraken).toBe(true);
+    expect(engine.state.round!.currentTrick.winnerId).toBeUndefined();
+
+    // 2. Test White Whale
+    expect(engine.advanceTrick()).toBe(true);
+    p1CardPlay(
+      engine,
+      { id: "white-whale", special: "whiteWhale" },
+      { id: "yellow-12", suit: "yellow", rank: 12 },
+    );
+    expect(engine.state.round!.currentTrick.winnerId).toBe("p2");
+  });
+
+  it("handles Pirate Powers (Rosie & Harry)", () => {
+    const engine = new PiratesGameEngine({
+      enableGhostPirate: false,
+      enablePiratePowers: true,
+    });
+    engine.addPlayer("p1", "A", "🏴‍☠️", true);
+    engine.addPlayer("p2", "B", "👑", false);
+    engine.startGame();
+
+    p1CardPlay(
+      engine,
+      { id: "pirate-1", special: "pirate", pirateName: "rosie" },
+      { id: "yellow-2", suit: "yellow", rank: 2 },
+    );
+
+    expect(engine.state.players[0].piratePowerPending).toBe("rosie");
+    expect(engine.useRosiePower("p1", "p2")).toBe(true);
+    expect(engine.state.round!.currentTrick.leadPlayerId).toBe("p2");
+  });
+
+  it("calculates Rascal scoring correctly for direct hit and miss", () => {
+    const engine = new PiratesGameEngine({
+      enableGhostPirate: false,
+      scoringMode: "RASCAL",
+      rascalOption: "CHEVROTINE",
+    });
+    engine.addPlayer("p1", "A", "🏴‍☠️", true);
+    engine.addPlayer("p2", "B", "👑", false);
+    engine.startGame();
+
+    // Force bids for 1-card round (potential 10 pts)
+    // p1 bids 1 (and wins 1), p2 bids 1 (and wins 0 => off by 1)
+    engine.submitBid("p1", 1);
+    engine.submitBid("p2", 1);
+
+    p1CardPlay(
+      engine,
+      { id: "yellow-5", suit: "yellow", rank: 5 },
+      { id: "yellow-2", suit: "yellow", rank: 2 },
+    );
+
+    engine.advanceTrick();
+    expect(engine.state.lastRoundScores).toBeDefined();
+    const p1Score = engine.state.lastRoundScores!.find((s) => s.playerId === "p1")!;
+    const p2Score = engine.state.lastRoundScores!.find((s) => s.playerId === "p2")!;
+
+    expect(p1Score.roundScore).toBe(10); // 100% of 10 for direct hit
+    expect(p2Score.roundScore).toBe(5);  // 50% of 10 for off-by-1
+  });
 });
+
+function p1CardPlay(
+  engine: PiratesGameEngine,
+  cardP1: any,
+  cardP2: any,
+): void {
+  const p1 = engine.state.players.find((p) => p.id === "p1")!;
+  const p2 = engine.state.players.find((p) => p.id === "p2")!;
+  p1.hand = [cardP1];
+  p2.hand = [cardP2];
+  engine.state.round!.currentTrick.leadPlayerId = "p1";
+  if (engine.state.phase === "BIDDING") {
+    engine.submitBid("p1", 0);
+    engine.submitBid("p2", 0);
+  }
+  engine.playCard("p1", cardP1.id);
+  engine.playCard("p2", cardP2.id);
+}

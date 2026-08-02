@@ -207,24 +207,60 @@ export class PiratesGameEngine {
     if (winnerPlayer) {
       winnerPlayer.tricksWon += 1;
       winnerPlayer.capturedBonus += res.capturedBonus;
+
+      // Check Pirate Powers
+      if (this.state.config.enablePiratePowers && res.winnerCard.card.special === "pirate" && res.winnerCard.playerId === res.winnerId) {
+        const pirateName = res.winnerCard.card.pirateName;
+        if (pirateName) {
+          winnerPlayer.piratePowerPending = pirateName;
+          if (pirateName === "will" && this.state.round?.deckRemainder) {
+            const drawn = this.state.round.deckRemainder.splice(0, 2);
+            winnerPlayer.hand.push(...drawn);
+            this.addLog(`Will le Bandit fait piocher 2 cartes à ${winnerPlayer.name}. Choisissez 2 cartes à défausser.`, "power");
+          } else if (pirateName === "juanita" && this.state.round?.deckRemainder) {
+            winnerPlayer.unseenCardsViewed = [...this.state.round.deckRemainder];
+            this.addLog(`Juanita Jade révèle ${this.state.round.deckRemainder.length} cartes du talon à ${winnerPlayer.name} !`, "power");
+          } else if (pirateName === "rosie") {
+            this.addLog(`Rosie la Douce permet à ${winnerPlayer.name} de choisir qui entame le pli suivant !`, "power");
+          } else if (pirateName === "rascal") {
+            this.addLog(`Rascal le Flambeur permet à ${winnerPlayer.name} de parier des points bonus !`, "power");
+          } else if (pirateName === "harry") {
+            this.addLog(`Harry le Géant permet à ${winnerPlayer.name} d'ajuster sa mise de +1 ou -1 !`, "power");
+          }
+        }
+      }
+    }
+
+    if (res.alliancesFormed && this.state.round) {
+      this.state.round.alliances.push(...res.alliancesFormed);
     }
 
     const resolvedTrick = {
       ...currentTrick,
       playedCards,
-      winnerId: res.winnerId,
+      winnerId: res.winnerId || undefined,
       capturedBonus: res.capturedBonus,
+      destroyedByKraken: res.destroyedByKraken,
+      destroyedByWhale: res.destroyedByWhale,
+      alliancesFormed: res.alliancesFormed,
     };
     this.state.round.currentTrick = resolvedTrick;
     this.state.round.trickHistory.push(resolvedTrick);
-    this.addLog(
-      `Pli remporté par ${winnerPlayer?.name || "un pirate"}${
-        res.capturedBonus ? ` (+${res.capturedBonus} bonus)` : ""
-      }`,
-    );
+
+    if (res.destroyedByKraken) {
+      this.addLog("🐙 Le Kraken a dévoré le pli ! Aucune personne ne marque ce pli.", "warning");
+    } else if (res.destroyedByWhale) {
+      this.addLog("🐳 La Baleine Blanche a détruit toutes les cartes spéciales ! Le pli est défaussé.", "warning");
+    } else {
+      this.addLog(
+        `Pli remporté par ${winnerPlayer?.name || "un pirate"}${
+          res.capturedBonus ? ` (+${res.capturedBonus} bonus)` : ""
+        }`,
+      );
+    }
 
     const roundEnded =
-      this.state.round.trickHistory.length >= this.state.round.roundNumber;
+      this.state.round.trickHistory.length >= this.state.round.cardsInRound;
     this.bumpNonce();
     return {
       ok: true,
@@ -239,11 +275,21 @@ export class PiratesGameEngine {
   public advanceTrick(): boolean {
     if (this.state.phase !== "TRICK" || !this.state.round) return false;
     const trick = this.state.round.currentTrick;
-    if (!trick.winnerId) return false;
+    if (!trick.winnerId && !trick.destroyedByKraken && !trick.destroyedByWhale) return false;
 
     const roundNum = this.state.round.roundNumber;
-    if (this.state.round.trickHistory.length < roundNum) {
+    if (this.state.round.trickHistory.length < this.state.round.cardsInRound) {
       let nextLeadId = trick.winnerId;
+
+      // Handle Kraken / Whale next lead override if set
+      const lastRes = resolveTrickWinner(
+        trick.playedCards,
+        this.state.config.enableFourteenBonus,
+      );
+      if (lastRes.leadForNextTrickId) {
+        nextLeadId = lastRes.leadForNextTrickId;
+      }
+
       if (nextLeadId === GHOST_PIRATE_ID) {
         const humanPlayers = getActivePlayers(this.state).filter((p) => !p.isBot);
         const prevLeadIdx = humanPlayers.findIndex(
@@ -257,7 +303,7 @@ export class PiratesGameEngine {
       }
 
       this.state.round.currentTrick = {
-        leadPlayerId: nextLeadId,
+        leadPlayerId: nextLeadId || trick.leadPlayerId,
         playedCards: [],
       };
       this.bumpNonce();
@@ -266,6 +312,63 @@ export class PiratesGameEngine {
     }
 
     applyRoundScoring(this.state, roundNum, (t, ty) => this.addLog(t, ty));
+    this.bumpNonce();
+    return true;
+  }
+
+  public useRosiePower(playerId: string, targetPlayerId: string): boolean {
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player || player.piratePowerPending !== "rosie") return false;
+    if (!this.state.players.some((p) => p.id === targetPlayerId)) return false;
+
+    if (this.state.round) {
+      this.state.round.currentTrick.leadPlayerId = targetPlayerId;
+    }
+    player.piratePowerPending = undefined;
+    const target = this.state.players.find((p) => p.id === targetPlayerId);
+    this.addLog(`🌹 ${player.name} a désigné ${target?.name} pour lancer le prochain pli.`, "power");
+    this.bumpNonce();
+    return true;
+  }
+
+  public useWillPower(playerId: string, discardCardIds: string[]): boolean {
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player || player.piratePowerPending !== "will") return false;
+    if (discardCardIds.length !== 2) return false;
+
+    player.hand = player.hand.filter((c) => !discardCardIds.includes(c.id));
+    player.piratePowerPending = undefined;
+    this.addLog(`🏴‍☠️ ${player.name} a défaussé 2 cartes suite au pouvoir de Will le Bandit.`, "power");
+    this.bumpNonce();
+    return true;
+  }
+
+  public useRascalPower(playerId: string, bonusBet: 0 | 10 | 20): boolean {
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player || player.piratePowerPending !== "rascal") return false;
+
+    player.rascalBonusBet = bonusBet;
+    player.piratePowerPending = undefined;
+    this.addLog(`🎲 ${player.name} a parié ${bonusBet} pts bonus avec Rascal le Flambeur !`, "power");
+    this.bumpNonce();
+    return true;
+  }
+
+  public useHarryPower(playerId: string, bidDelta: -1 | 0 | 1): boolean {
+    const player = this.state.players.find((p) => p.id === playerId);
+    if (!player || player.piratePowerPending !== "harry") return false;
+
+    const oldBid = player.bid ?? 0;
+    const newBid = Math.max(0, oldBid + bidDelta);
+    player.bid = newBid;
+    if (this.state.round) {
+      this.state.round.bidsSubmitted[playerId] = newBid;
+    }
+    player.piratePowerPending = undefined;
+    this.addLog(
+      `💪 ${player.name} a ajusté sa mise à ${newBid} (${bidDelta >= 0 ? "+" : ""}${bidDelta}) grâce à Harry le Géant !`,
+      "power",
+    );
     this.bumpNonce();
     return true;
   }

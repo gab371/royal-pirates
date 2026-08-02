@@ -133,6 +133,126 @@ export const Lobby: React.FC<LobbyProps> = ({
                 className="w-4 h-4 rounded accent-amber-500 bg-zinc-800 border-zinc-700 cursor-pointer"
               />
             </label>
+
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer border-t border-zinc-800/80 pt-2">
+              <div>
+                <div className="font-bold text-rose-300">🐙 Léviathans (Kraken & Baleine Blanche)</div>
+                <div className="text-[10px] text-zinc-500">
+                  Kraken dévore les plis, Baleine Blanche détruit les pouvoirs
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                disabled={!isHost}
+                checked={gameState?.config?.enableKrakenAndWhale ?? false}
+                onChange={(e) =>
+                  onChangeConfig?.({ enableKrakenAndWhale: e.target.checked })
+                }
+                className="w-4 h-4 rounded accent-rose-500 bg-zinc-800 border-zinc-700 cursor-pointer"
+              />
+            </label>
+
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer">
+              <div>
+                <div className="font-bold text-yellow-300">💰 Cartes Butin & Alliances (+20 pts)</div>
+                <div className="text-[10px] text-zinc-500">
+                  Alliances secrètes avec le gagnant du pli
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                disabled={!isHost}
+                checked={gameState?.config?.enableLoot ?? false}
+                onChange={(e) =>
+                  onChangeConfig?.({ enableLoot: e.target.checked })
+                }
+                className="w-4 h-4 rounded accent-yellow-500 bg-zinc-800 border-zinc-700 cursor-pointer"
+              />
+            </label>
+
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer">
+              <div>
+                <div className="font-bold text-amber-300">⚔️ Pouvoirs Avancés des Pirates</div>
+                <div className="text-[10px] text-zinc-500">
+                  Rosie, Will, Rascal, Juanita et Harry débloquent leurs capacités
+                </div>
+              </div>
+              <input
+                type="checkbox"
+                disabled={!isHost}
+                checked={gameState?.config?.enablePiratePowers ?? false}
+                onChange={(e) =>
+                  onChangeConfig?.({ enablePiratePowers: e.target.checked })
+                }
+                className="w-4 h-4 rounded accent-amber-500 bg-zinc-800 border-zinc-700 cursor-pointer"
+              />
+            </label>
+
+            <div className="flex items-center justify-between text-zinc-300 border-t border-zinc-800/80 pt-2">
+              <div>
+                <div className="font-bold">Système de Score</div>
+                <div className="text-[10px] text-zinc-500">
+                  {gameState?.config?.scoringMode === "RASCAL" ? "Potentiel fixe par manche" : "Classique Skull King"}
+                </div>
+              </div>
+              <select
+                disabled={!isHost}
+                value={gameState?.config?.scoringMode ?? "CLASSIC"}
+                onChange={(e) =>
+                  onChangeConfig?.({ scoringMode: e.target.value as "CLASSIC" | "RASCAL" })
+                }
+                className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-amber-300 cursor-pointer"
+              >
+                <option value="CLASSIC">Classique</option>
+                <option value="RASCAL">Rascal (Potentiel Fixe)</option>
+              </select>
+            </div>
+
+            {gameState?.config?.scoringMode === "RASCAL" && (
+              <div className="flex items-center justify-between text-zinc-300 pl-3">
+                <div>
+                  <div className="font-bold text-sky-300">Option Rascal</div>
+                  <div className="text-[10px] text-zinc-500">
+                    {gameState?.config?.rascalOption === "BOULET_DE_CANON" ? "Poing fermé (15 pts/carte si exact, 0 si erreur)" : "Chevrotine (100%/50%/0%)"}
+                  </div>
+                </div>
+                <select
+                  disabled={!isHost}
+                  value={gameState?.config?.rascalOption ?? "CHEVROTINE"}
+                  onChange={(e) =>
+                    onChangeConfig?.({ rascalOption: e.target.value as "CHEVROTINE" | "BOULET_DE_CANON" })
+                  }
+                  className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-sky-300 cursor-pointer"
+                >
+                  <option value="CHEVROTINE">Chevrotine (Main ouverte)</option>
+                  <option value="BOULET_DE_CANON">Boulet de Canon (Poing fermé)</option>
+                </select>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between text-zinc-300 border-t border-zinc-800/80 pt-2">
+              <div>
+                <div className="font-bold">Structure des Manches</div>
+                <div className="text-[10px] text-zinc-500">
+                  Nombre et progression des cartes distribuées
+                </div>
+              </div>
+              <select
+                disabled={!isHost}
+                value={gameState?.config?.roundStructure ?? "STANDARD"}
+                onChange={(e) =>
+                  onChangeConfig?.({ roundStructure: e.target.value as any })
+                }
+                className="bg-zinc-900 border border-zinc-700 rounded-lg px-2 py-1 text-xs text-amber-300 cursor-pointer"
+              >
+                <option value="STANDARD">Standard (10 manches : 1➔10 cartes)</option>
+                <option value="EVEN_ONLY">Pas d'impair (5 manches : 2, 4, 6, 8, 10)</option>
+                <option value="READY_FOR_BATTLE">Prêt au combat (5 manches : 6➔10)</option>
+                <option value="LIGHTNING">Attaque éclair (5 manches de 5)</option>
+                <option value="BARRAGE">Tir de barrage (10 manches de 10)</option>
+                <option value="WHIRLWIND">Tourbillon (5 manches : 9, 7, 5, 3, 1)</option>
+              </select>
+            </div>
           </div>
         </div>
 

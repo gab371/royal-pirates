@@ -113,5 +113,29 @@ export function handleHostAction(
         playSfx("click");
       }
       break;
+
+    case "USE_ROSIE_POWER":
+      if (payload?.targetPlayerId && engine.useRosiePower(playerId, payload.targetPlayerId as string)) {
+        playSfx("special");
+      }
+      break;
+
+    case "USE_WILL_POWER":
+      if (Array.isArray(payload?.discardCardIds) && engine.useWillPower(playerId, payload.discardCardIds as string[])) {
+        playSfx("card");
+      }
+      break;
+
+    case "USE_RASCAL_POWER":
+      if (typeof payload?.bonusBet === "number" && engine.useRascalPower(playerId, payload.bonusBet as 0 | 10 | 20)) {
+        playSfx("bid");
+      }
+      break;
+
+    case "USE_HARRY_POWER":
+      if (typeof payload?.bidDelta === "number" && engine.useHarryPower(playerId, payload.bidDelta as -1 | 0 | 1)) {
+        playSfx("bid");
+      }
+      break;
   }
 }

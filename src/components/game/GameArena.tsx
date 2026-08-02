@@ -7,6 +7,8 @@ import { PirateCardFace } from "./PirateCardFace.tsx";
 import { AuctionPanel } from "./AuctionPanel.tsx";
 import { Scoreboard } from "./Scoreboard.tsx";
 
+import { PiratePowerModal } from "./PiratePowerModal.tsx";
+
 interface GameArenaProps {
   gameState: GameState;
   myPeerId: string | null;
@@ -16,6 +18,10 @@ interface GameArenaProps {
   onAdvanceTrick: () => void;
   onAdvanceRound: () => void;
   onRestartGame: () => void;
+  onUseRosie?: (targetPlayerId: string) => void;
+  onUseWill?: (discardCardIds: string[]) => void;
+  onUseRascal?: (bonusBet: 0 | 10 | 20) => void;
+  onUseHarry?: (bidDelta: -1 | 0 | 1) => void;
 }
 
 function OpponentSeat({
@@ -59,6 +65,10 @@ export function GameArena({
   onAdvanceTrick,
   onAdvanceRound,
   onRestartGame,
+  onUseRosie,
+  onUseWill,
+  onUseRascal,
+  onUseHarry,
 }: GameArenaProps) {
   const me = gameState.players.find((p) => p.id === myPeerId);
   const activeId = getCurrentActorId(gameState);
@@ -266,6 +276,20 @@ export function GameArena({
           )}
         </div>
       </div>
+
+      {me && (
+        <PiratePowerModal
+          me={me}
+          players={gameState.players}
+          onUseRosie={onUseRosie || (() => {})}
+          onUseWill={onUseWill || (() => {})}
+          onUseRascal={onUseRascal || (() => {})}
+          onUseHarry={onUseHarry || (() => {})}
+          onCloseJuanita={() => {
+            me.unseenCardsViewed = undefined;
+          }}
+        />
+      )}
     </div>
   );
 }

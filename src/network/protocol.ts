@@ -30,7 +30,11 @@ export type ClientActionType =
   | "PLAY_CARD"
   | "ADVANCE_TRICK"
   | "ADVANCE_ROUND"
-  | "RESTART_GAME";
+  | "RESTART_GAME"
+  | "USE_ROSIE_POWER"
+  | "USE_WILL_POWER"
+  | "USE_RASCAL_POWER"
+  | "USE_HARRY_POWER";
 
 export interface ActionMessage extends NetworkMessage {
   type: "ACTION";

@@ -1,13 +1,21 @@
-import type { Card, Suit } from "./types.ts";
+import type { Card, GameConfig, Suit } from "./types.ts";
 
 export const DEFAULT_SUITS: Suit[] = ["yellow", "green", "blue", "black"];
 
-export function createDeck(): Card[] {
+export const PIRATE_NAMES: ("rosie" | "will" | "rascal" | "juanita" | "harry")[] = [
+  "rosie",
+  "will",
+  "rascal",
+  "juanita",
+  "harry",
+];
+
+export function createDeck(config?: Partial<GameConfig>): Card[] {
   const cards: Card[] = [];
 
-  // 1. Suited cards: 4 suits x 13 ranks (1-13) = 52 cards
+  // 1. Suited cards: 4 suits x 14 ranks (1-14) = 56 cards
   for (const suit of DEFAULT_SUITS) {
-    for (let rank = 1; rank <= 13; rank++) {
+    for (let rank = 1; rank <= 14; rank++) {
       cards.push({
         id: `${suit}-${rank}`,
         suit,
@@ -24,11 +32,12 @@ export function createDeck(): Card[] {
     });
   }
 
-  // 3. Special cards: 5 Pirates
-  for (let i = 1; i <= 5; i++) {
+  // 3. Special cards: 5 Pirates (with names)
+  for (let i = 0; i < 5; i++) {
     cards.push({
-      id: `pirate-${i}`,
+      id: `pirate-${i + 1}`,
       special: "pirate",
+      pirateName: PIRATE_NAMES[i],
     });
   }
 
@@ -52,6 +61,30 @@ export function createDeck(): Card[] {
     special: "tigress",
   });
 
+  // 7. Extensions: Kraken & Baleine Blanche
+  if (config?.enableKrakenAndWhale) {
+    cards.push({
+      id: "kraken",
+      special: "kraken",
+    });
+    cards.push({
+      id: "white-whale",
+      special: "whiteWhale",
+    });
+  }
+
+  // 8. Extensions: Butin (2 cards)
+  if (config?.enableLoot) {
+    cards.push({
+      id: "loot-1",
+      special: "loot",
+    });
+    cards.push({
+      id: "loot-2",
+      special: "loot",
+    });
+  }
+
   return cards;
 }
 
@@ -67,7 +100,16 @@ export function shuffleDeck(deck: Card[]): Card[] {
 export function getCardName(card: Card, tigressChoice?: "escape" | "pirate"): string {
   if (card.isMasked) return "Card Masked 🏴‍☠️";
   if (card.special === "escape") return "Fuite";
-  if (card.special === "pirate") return "Pirate";
+  if (card.special === "pirate") {
+    const pirateLabels: Record<string, string> = {
+      rosie: "Rosie la Douce",
+      will: "Will le Bandit",
+      rascal: "Rascal le Flambeur",
+      juanita: "Juanita Jade",
+      harry: "Harry le Géant",
+    };
+    return card.pirateName ? `${pirateLabels[card.pirateName]} (Pirate)` : "Pirate";
+  }
   if (card.special === "mermaid") return "Sirène";
   if (card.special === "skullKing") return "Roi des Crânes";
   if (card.special === "tigress") {
@@ -75,6 +117,9 @@ export function getCardName(card: Card, tigressChoice?: "escape" | "pirate"): st
     if (tigressChoice === "escape") return "Tigresse (Fuite)";
     return "Tigresse";
   }
+  if (card.special === "kraken") return "Kraken 🐙";
+  if (card.special === "whiteWhale") return "Baleine Blanche 🐳";
+  if (card.special === "loot") return "Carte Butin 💰";
 
   const suitNames: Record<Suit, string> = {
     yellow: "Jaune",
@@ -93,6 +138,9 @@ export function getSuitEmoji(card: Card): string {
   if (card.special === "mermaid") return "🧜‍♀️";
   if (card.special === "skullKing") return "👑";
   if (card.special === "tigress") return "🐯";
+  if (card.special === "kraken") return "🐙";
+  if (card.special === "whiteWhale") return "🐳";
+  if (card.special === "loot") return "💰";
   if (card.suit === "yellow") return "🟡";
   if (card.suit === "green") return "🟢";
   if (card.suit === "blue") return "🔵";
@@ -107,6 +155,9 @@ export function getSuitColor(card: Card): string {
   if (card.special === "mermaid") return "text-cyan-300 bg-cyan-950/80 border-cyan-500/80";
   if (card.special === "skullKing") return "text-purple-300 bg-purple-950/90 border-purple-500/90 ring-2 ring-purple-500/50";
   if (card.special === "tigress") return "text-orange-400 bg-orange-950/80 border-orange-500/80";
+  if (card.special === "kraken") return "text-rose-400 bg-rose-950/90 border-rose-600/90 ring-2 ring-rose-600/50";
+  if (card.special === "whiteWhale") return "text-teal-200 bg-teal-950/90 border-teal-400/90 ring-2 ring-teal-400/50";
+  if (card.special === "loot") return "text-yellow-300 bg-amber-900/90 border-yellow-500/90";
 
   if (card.suit === "yellow") return "text-amber-300 bg-amber-950/60 border-amber-500/60";
   if (card.suit === "green") return "text-emerald-300 bg-emerald-950/60 border-emerald-500/60";

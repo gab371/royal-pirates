@@ -1,20 +1,45 @@
 export type Suit = "yellow" | "green" | "blue" | "black";
-export type SpecialType = "escape" | "pirate" | "mermaid" | "skullKing" | "tigress";
+export type SpecialType =
+  | "escape"
+  | "pirate"
+  | "mermaid"
+  | "skullKing"
+  | "tigress"
+  | "kraken"
+  | "whiteWhale"
+  | "loot";
 
 export interface Card {
   id: string;
   suit?: Suit;
   rank?: number;
   special?: SpecialType;
+  pirateName?: "rosie" | "will" | "rascal" | "juanita" | "harry";
   isMasked?: boolean;
 }
 
 export type Phase = "LOBBY" | "BIDDING" | "TRICK" | "SCORING" | "GAME_OVER";
 
+export type ScoringMode = "CLASSIC" | "RASCAL";
+export type RascalOption = "CHEVROTINE" | "BOULET_DE_CANON";
+export type RoundStructure =
+  | "STANDARD"
+  | "EVEN_ONLY"
+  | "READY_FOR_BATTLE"
+  | "LIGHTNING"
+  | "BARRAGE"
+  | "WHIRLWIND";
+
 export interface GameConfig {
   suitFollowHints: boolean;
   enableFourteenBonus: boolean;
   enableGhostPirate?: boolean;
+  enableKrakenAndWhale?: boolean;
+  enableLoot?: boolean;
+  enablePiratePowers?: boolean;
+  scoringMode?: ScoringMode;
+  rascalOption?: RascalOption;
+  roundStructure?: RoundStructure;
 }
 
 export interface Player {
@@ -31,6 +56,9 @@ export interface Player {
   isReady: boolean;
   isHost: boolean;
   isBot?: boolean;
+  piratePowerPending?: "rosie" | "will" | "rascal" | "juanita" | "harry";
+  unseenCardsViewed?: Card[];
+  rascalBonusBet?: 0 | 10 | 20;
 }
 
 export interface Spectator {
@@ -52,15 +80,21 @@ export interface Trick {
   playedCards: PlayedCard[];
   winnerId?: string;
   capturedBonus?: number;
+  destroyedByKraken?: boolean;
+  destroyedByWhale?: boolean;
+  alliancesFormed?: { player1Id: string; player2Id: string }[];
 }
 
 export interface RoundState {
   roundNumber: number;
   totalRounds: number;
+  cardsInRound: number;
   dealerId: string;
   currentTrick: Trick;
   trickHistory: Trick[];
   bidsSubmitted: Record<string, number>;
+  alliances: { player1Id: string; player2Id: string }[];
+  deckRemainder: Card[];
 }
 
 export interface LogEntry {

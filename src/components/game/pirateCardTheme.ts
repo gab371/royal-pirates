@@ -82,4 +82,28 @@ export const SPECIAL: Record<
     title: "TIGRESSE",
     glyph: "paw",
   },
+  kraken: {
+    field: "#7C1D2C",
+    fieldDark: "#3F0A14",
+    foil: "#FB7185",
+    ink: "#FFE4E6",
+    title: "KRAKEN",
+    glyph: "kraken",
+  },
+  whiteWhale: {
+    field: "#115E59",
+    fieldDark: "#042F2E",
+    foil: "#2DD4BF",
+    ink: "#CCFBF1",
+    title: "BALEINE BLANCHE",
+    glyph: "whale",
+  },
+  loot: {
+    field: "#78350F",
+    fieldDark: "#3A1A06",
+    foil: "#FBBF24",
+    ink: "#FEF3C7",
+    title: "BUTIN",
+    glyph: "loot",
+  },
 };

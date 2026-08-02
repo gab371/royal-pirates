@@ -329,6 +329,14 @@ export function useGame(options?: UseGameOptions) {
     advanceTrick: () => dispatchAction("ADVANCE_TRICK"),
     advanceRound: () => dispatchAction("ADVANCE_ROUND"),
     restartGame: () => dispatchAction("RESTART_GAME"),
+    useRosiePower: (targetPlayerId: string) =>
+      dispatchAction("USE_ROSIE_POWER", { targetPlayerId }),
+    useWillPower: (discardCardIds: string[]) =>
+      dispatchAction("USE_WILL_POWER", { discardCardIds }),
+    useRascalPower: (bonusBet: 0 | 10 | 20) =>
+      dispatchAction("USE_RASCAL_POWER", { bonusBet }),
+    useHarryPower: (bidDelta: -1 | 0 | 1) =>
+      dispatchAction("USE_HARRY_POWER", { bidDelta }),
     sendChatMessage: (text: string) =>
       sendChat(localPlayerName || "Pirate", text),
     disconnect,
